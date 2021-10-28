@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Retrosu</title>
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,
+    user-scalable=no, initial-scale=1, maximum-scale=1"
+    />
+    <script src="https://unpkg.com/sounds-some-sounds@1.0.5/build/index.js"></script>
+    <script src="https://unpkg.com/gif-capture-canvas@1.1.0/build/index.js"></script>
+    <script src="https://unpkg.com/terser@4.6.11/dist/bundle.min.js"></script>
+    <script src="https://unpkg.com/pixi.js@5.3.0/dist/pixi.min.js"></script>
+    <script src="https://unpkg.com/pixi-filters@3.1.1/dist/pixi-filters.js"></script>
+    <script>
+      var module = {};
+    </script>
+    <script src="https://unpkg.com/lodash.clonedeep@4.5.0/index.js"></script>
+    <script src="https://abagames.github.io/crisp-game-lib/bundle.js"></script>
+
+<script> 
+title = "Retrosu";
+description = "Click On Circles.";
+
+characters = [
+`
+ rrr
+rrrrr
+rrrrr
+ rrr
+`
+];
+
+const G = {
+  // Game Border
+  WIDTH: 150,
+  HEIGHT: 150,
+
+  // Game Text settings
+  MULTIPLIER : 1,
+  LIFELINE: 100,
+
+  // Timer for circle
+  TIMER: 150
+};
+
+options = {
+  viewSize: {x: G.WIDTH, y: G.HEIGHT},
+  seed : 1337,
+  isPlayingBgm: true,
+  isReplayEnabled: true,
+  theme: "dark"
+};
+
+// Initalization of variables
+let player;
+player = {
+  pos: vec(G.WIDTH / 2, G.HEIGHT / 2),
+  health: G.LIFELINE
+};
+
+let list = [];
+let stars = [];
+
+let timer = G.TIMER;
+let timer2 = 200;
+let thickness = 10;
+let size = 10;
+let direction = rnds(1, 1);
+
+function update() {
+  if (!ticks) {
+    SPEED = 1;
+
+    // Background art
+    stars = times(20, ()=>{
+      const posX = rnd(0, G.WIDTH);
+      const posY = rnd(0, G.HEIGHT);
+        return{
+          pos: vec(posX, posY),
+          speed: rnd(0.5, 1.0)
+        };
+    });
+  }
+
+  // Background art movement
+  color("yellow");
+  stars.forEach((s)=>{
+    box(s.pos, 1);
+    s.pos.x -= s.speed;
+    s.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
+  });
+  
+  // Updating and drawing the player
+  player.pos = vec(input.pos.x, input.pos.y);
+  player.pos.clamp(0, G.WIDTH, 0, G.HEIGHT);
+  char("a", player.pos);
+
+  // constantly filling the list
+  if (list.length === 0){
+    for (let i = 0; i < 1; i++){
+      const posX = rnd(40, 80);
+      const posY = rnd(20, 80);
+      list.push({pos: vec(posX, posY)});
+    }
+  }
+
+  // Direction changer for circles for randomization
+  if (input.isJustPressed){
+      direction *= rnds(1, 1);
+  }
+
+  // Remove circles 1 from left to right
+  remove(list, (l) => {
+
+    // Circle creation
+    color("purple");
+    thickness -= 0.10;
+    size -= 0.10;
+    arc(l.pos.x, l.pos.y, size, thickness, 180);
+    
+    // Transformation of circle's movement --- needs adjustment
+    l.pos.x += Math.sin(thickness / 45) * direction;
+    l.pos.x += 0.5 * direction;
+    l.pos.y += Math.sin(thickness / 45) * direction;
+    l.pos.y += 0.5 * direction;
+
+    // Generate particles
+    particle(player.pos.x, player.pos.y, 2, 1, -PI/20, PI/20);
+
+    // Player circle click
+    if ((char("a", player.pos).isColliding.rect.purple) && input.isJustPressed) {
+      play("explode");
+      if (thickness < 3.5 || size < 3.5) {
+        addScore(30 * G.MULTIPLIER, l.pos);
+      } else if (thickness <= 6.5 || size <= 6.5) {
+        addScore(20 * G.MULTIPLIER, l.pos);
+      } else {
+        addScore(10 * G.MULTIPLIER, l.pos);
+      }
+      G.MULTIPLIER += 1;
+      thickness = 10;
+      size = 10;
+    }
+
+    // Reset score multiplier
+    if (input.isJustPressed && !((char("a", player.pos).isColliding.rect.purple))) {
+      G.MULTIPLIER = 1;
+      if (player.health < 20) {
+        player.health = 0;
+      } else {
+        player.health -= 20;
+      }
+    }
+
+    // Circle shrink
+    if (thickness < -1 || size < -1){
+      thickness = 10;
+      size = 10;
+    }
+
+    // Penalty for when a circle disappears without being hit
+    if (thickness < 0 || size < 0 || l.pos.x > G.WIDTH) {
+      G.MULTIPLIER = 1;
+      player.health -= 2;
+    }
+
+    return (char("a", player.pos).isColliding.rect.purple && input.isJustPressed) 
+      || thickness < 0 || size < 0 || l.pos.x > G.WIDTH || l.pos.x < 0;
+  });
+
+  // Health maintenance
+  if (player.health >= 100) {
+    player.health = 100;
+  } else if (player.health > 0 && player.health < 100) {
+    player.health += 0.1;
+  } else {
+    end();
+    player.health = 100;
+  }
+
+  // Game Text
+  color("red");
+  let multiX = text("x" + G.MULTIPLIER.toString(), 3, 10);
+  healthText = player.health.toString();
+  if (player.health < 100) {
+    healthText = healthText.slice(0, (healthText.indexOf(".")) + 2);
+  }
+  let healthB = text(healthText + "%", 120, 10);
+  
+}
+
+addEventListener("load", onLoad);
+</script>
+  </head>
+  <body style="background: #ddd"></body>
+</html>
