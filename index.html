@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Retrosu</title>
+    <title>RetrOsu</title>
     <meta
       name="viewport"
       content="width=device-width, height=device-height,
@@ -20,7 +20,7 @@
     <script src="https://abagames.github.io/crisp-game-lib/bundle.js"></script>
 
 <script> 
-title = "Retrosu";
+title = "RetrOsu";
 description = "Click On Circles.";
 
 characters = [
@@ -61,7 +61,6 @@ player = {
 };
 
 let list = [];
-let stars = [];
 
 let timer = G.TIMER;
 let timer2 = 200;
@@ -72,25 +71,7 @@ let direction = rnds(1, 1);
 function update() {
   if (!ticks) {
     SPEED = 1;
-
-    // Background art
-    stars = times(20, ()=>{
-      const posX = rnd(0, G.WIDTH);
-      const posY = rnd(0, G.HEIGHT);
-        return{
-          pos: vec(posX, posY),
-          speed: rnd(0.5, 1.0)
-        };
-    });
   }
-
-  // Background art movement
-  color("yellow");
-  stars.forEach((s)=>{
-    box(s.pos, 1);
-    s.pos.x -= s.speed;
-    s.pos.wrap(0, G.WIDTH, 0, G.HEIGHT);
-  });
   
   // Updating and drawing the player
   player.pos = vec(input.pos.x, input.pos.y);
@@ -100,8 +81,8 @@ function update() {
   // constantly filling the list
   if (list.length === 0){
     for (let i = 0; i < 1; i++){
-      const posX = rnd(40, 80);
-      const posY = rnd(20, 80);
+      const posX = rnd(25, 125);
+      const posY = rnd(25, 125);
       list.push({pos: vec(posX, posY)});
     }
   }
@@ -115,7 +96,7 @@ function update() {
   remove(list, (l) => {
 
     // Circle creation
-    color("purple");
+    color("yellow");
     thickness -= 0.10;
     size -= 0.10;
     arc(l.pos.x, l.pos.y, size, thickness, 180);
@@ -130,7 +111,7 @@ function update() {
     particle(player.pos.x, player.pos.y, 2, 1, -PI/20, PI/20);
 
     // Player circle click
-    if ((char("a", player.pos).isColliding.rect.purple) && input.isJustPressed) {
+    if ((char("a", player.pos).isColliding.rect.yellow) && input.isJustPressed) {
       play("explode");
       if (thickness < 3.5 || size < 3.5) {
         addScore(30 * G.MULTIPLIER, l.pos);
@@ -145,7 +126,7 @@ function update() {
     }
 
     // Reset score multiplier
-    if (input.isJustPressed && !((char("a", player.pos).isColliding.rect.purple))) {
+    if (input.isJustPressed && !((char("a", player.pos).isColliding.rect.yellow))) {
       G.MULTIPLIER = 1;
       if (player.health < 20) {
         player.health = 0;
@@ -166,8 +147,8 @@ function update() {
       player.health -= 2;
     }
 
-    return (char("a", player.pos).isColliding.rect.purple && input.isJustPressed) 
-      || thickness < 0 || size < 0 || l.pos.x > G.WIDTH || l.pos.x < 0;
+    return (char("a", player.pos).isColliding.rect.yellow && input.isJustPressed) 
+      || thickness < 0 || size < 0 || l.pos.x > G.WIDTH || l.pos.x < 0 || l.pos.y > G.HEIGHT || l.pos.y < 0;
   });
 
   // Health maintenance
